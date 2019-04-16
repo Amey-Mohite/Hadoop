@@ -1,0 +1,399 @@
+################################################################ WORD COUNT #########################################################
+
+hadoop fs -mkdir /data
+
+hadoop fs -rm -r /data
+
+hadoop fs -put /home/cloudera/Desktop/Main_exam/code_1 /data
+
+hadoop jar /usr/lib/hadoop-0.20-mapreduce/hadoop-examples.jar
+
+hadoop jar /usr/lib/hadoop-0.20-mapreduce/hadoop-examples.jar wordcount /data/code_1 /data/
+
+wordcount
+
+hadoop fs -cat /data/wordcount/part-r-00000
+
+hadoop fs -get /data/wordcount/ /home/cloudera/Desktop/word
+
+########################################################## Big-Data-2 ##################################################################
+
+#Big_data_2 folder
+
+cd Downloads
+
+cd big-data-2
+
+ls
+
+cd image
+
+#to view image 
+eog Australia.jpg
+eog Australia.jpg &
+
+#to view Dimensions
+./dimensions.py Australia.jpg
+
+#to get pixel at specific point 
+./pixel.py Australia.jpg 200 200
+
+# to View code
+cat pixel.py
+
+cd ..
+
+cd Json
+
+#to view specific tweet
+./print.py
+Enter filename:twitter.json
+Tweetnumber:43
+Enter path:text
+
+cd ..
+
+cd sensor
+
+# plot data
+./plot-data.py wa-data.txt Ta(column name)
+
+cd ..
+
+cd vector
+
+cd data
+
+ls -l
+
+more csv1.csv
+
+press q(to quit)
+
+cd ..
+
+#to run the THIDF
+./runLuceneTFIDF.sh data
+
+################################################################### HIVE WORKSHOP #################################
+
+#in hadoop
+hadoop fs -mkdir /data/logs
+hadoop fs -put /home/cloudera/Downloads/2008-01.txt /data/logs
+hadoop fs -put /home/cloudera/Downloads/2008-02.txt /data/logs
+hadoop fs -put /home/cloudera/Downloads/2008-03.txt /data/logs
+hadoop fs -put /home/cloudera/Downloads/2008-04.txt /data/logs
+hadoop fs -put /home/cloudera/Downloads/2008-05.txt /data/logs
+hadoop fs -put /home/cloudera/Downloads/2008-06.txt /data/logs
+
+
+#in  hive
+
+CREATE TABLE rawlog (log_date STRING, log_time STRING, c_ip STRING,cs_username STRING, s_ip STRING,  s_port STRING,cs_method STRING, cs_uri_stem STRING, cs_uri_query STRING,sc_status STRING, sc_bytes INT, cs_bytes INT, time_taken INT, cs_user_agent STRING, cs_referrer STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' '; 
+
+LOAD DATA INPATH '/data/logs/2008-01.txt' INTO TABLE rawlog;
+LOAD DATA INPATH '/data/logs/2008-02.txt' INTO TABLE rawlog;
+LOAD DATA INPATH '/data/logs/2008-03.txt' INTO TABLE rawlog;
+LOAD DATA INPATH '/data/logs/2008-04.txt' INTO TABLE rawlog;
+LOAD DATA INPATH '/data/logs/2008-05.txt' INTO TABLE rawlog;
+LOAD DATA INPATH '/data/logs/2008-06.txt' INTO TABLE rawlog;
+
+SELECT * FROM rawlog LIMIT 100 ;
+
+SELECT count(*) FROM rawlog ;
+
+CREATE EXTERNAL TABLE cleanlog (log_date DATE, log_time STRING, c_ip STRING, cs_username STRING, s_ip STRING, s_port STRING, cs_method STRING, cs_uri_stem STRING, cs_uri_query STRING, sc_status STRING, sc_bytes INT, cs_bytes INT, time_taken INT, cs_user_agent STRING, cs_referrer STRING) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE LOCATION '/data/cleanlog'; 
+
+INSERT INTO TABLE cleanlog SELECT * FROM rawlog WHERE SUBSTR(log_date, 1, 1) <> '#' ; 
+
+SELECT * FROM cleanlog LIMIT 100 ; 
+
+SELECT count(*) FROM cleanlog ; 
+
+CREATE VIEW vDailySummary AS SELECT log_date, COUNT(*) AS requests, SUM(cs_bytes) AS inbound_bytes, SUM(sc_bytes) AS outbound_bytes FROM cleanlog GROUP BY log_date ;
+
+SELECT * FROM vDailySummary ORDER BY log_date; 
+
+CREATE EXTERNAL TABLE partitionedlog (log_day int, log_time STRING, c_ip STRING, cs_username STRING, s_ip STRING, s_port STRING, cs_method STRING, cs_uri_stem STRING, cs_uri_query STRING, sc_status STRING, sc_bytes INT, cs_bytes INT, time_taken INT, cs_user_agent STRING, cs_referrer STRING) PARTITIONED BY (log_year int, log_month int) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE LOCATION '/data/partitionedlog'; 
+
+SET hive.exec.dynamic.partition.mode=nonstrict; 
+
+SET hive.exec.dynamic.partition = true; 
+
+INSERT INTO TABLE partitionedlog PARTITION(log_year, log_month) SELECT DAY(log_date), log_time, c_ip, cs_username, s_ip, s_port, cs_method, cs_uri_stem, cs_uri_query, sc_status, sc_bytes, cs_bytes, time_taken, cs_user_agent, cs_referrer, YEAR(log_date), MONTH(log_date) FROM rawlog WHERE SUBSTR(log_date, 1, 1) <> '#' ;
+
+SELECT log_day, count(*) AS page_hits FROM partitionedlog WHERE log_year=2008 AND log_month=6 GROUP BY log_day; 
+
+hadoop fs -get /data/partitionedlog /home/cloudera/Desktop
+
+#################################################### MongoDB ###############################################
+
+Download Big-data-3.zip from github
+
+extract Big-data-3.zip 
+
+#terminal 1
+run setup.sh by ./setup.sh in Big-data-3 folder
+
+cd mongodb
+
+mongodb/bin/mongod --dbpath db
+
+#terminal 2
+
+Go to cd /Downloads/big-data-3/mongodb
+
+#to start mongodb
+mongodb/bin/mongo
+
+show dbs
+
+use sample
+
+show tables
+
+# to view data
+db.users.find()
+
+#to create new table you need to insert dat into data the nit will be created
+db.x.insert({name: "sarada", id: 1, year: 2014})
+#after that you can insert normally 
+db.x.insert({name:"amey",id:2,year:2015})
+#to view
+db.x.find()
+
+#to neglect specific columns 
+db.x.find({},{_id:0})
+
+#count 
+db.users.count()
+
+#print firrst record
+db.users.findOne()
+
+#print specific record
+db.users.findOne({},{user_name:1,_id:0})
+
+#print distint user name
+db.users.distinct("user_name")
+
+#like where condition in sql
+db.users.find({user_name:"ActionSportsJax"})
+
+#to view data in proper order
+db.users.find({user_name:"ActionSportsJax"}).pretty()
+
+# condition and specific columns
+db.users.find({user_name:"ActionSportsJax"},{tweet_ID:1})
+
+# "Like" in sql find where FIFA
+db.users.find({tweet_text:/FIFA/})
+#count the same
+db.users.find({tweet_text:/FIFA/}).count()
+
+#create index
+db.users.createIndex({"tweet_text":"text"})
+
+#AFter creating index now count()
+db.users.find({"$text":{$search:"FIFA"}}).count()
+
+#containg word and not containg some other word
+#here the index text containing word FIFA and not word texas thats why (-Texas)
+db.users.find({"$text":{$search:"FIFA -Texas"}}).count()
+
+# greater than and less than 
+db.users.find({tweet_mentioned_count:{$gt :6}})
+db.users.find({tweet_mentioned_count:{$gt :6}}).count()
+
+#compare two columnss
+db.users.find({$where:"this.tweet_mentioned_count>this.tweet_followers_count"}).count()
+
+#two conditions
+db.users.find({$and:[{tweet_text:/FIFA/},{tweet_mentioned_count:{$gt : 4}}]})
+db.users.find({$and:[{tweet_text:/FIFA/},{tweet_mentioned_count:{$gt : 4}}]},{user_name:1,_id:0})
+db.users.find({$and:[{tweet_text:/FIFA/},{tweet_mentioned_count:{$gt : 4}}]}).count()
+
+#condition where variable is inside another variable
+db.users.find({$and:[{tweet_text:/FIFA/},{'user.Location':"Nigeria"}]},{user_name:1,_id:0})
+
+######################################################################## Friegth Miles ############################################
+1. Create Directory and put file in to hadoop
+
+hadoop fs -mkdir /unit
+
+hadoop fs -ls /unit
+
+hadoop fs -put /home/cloudera/Desktop/heathrow.txt /unit
+
+2. Start Pig and Data Cleaning :
+
+Reading = LOAD '/unit/heathrow.txt' USING PigStorage('\t') AS (year:chararray,month:float,maxtemp:float,mintemp:float,frostday:chararray,rainfall:chararray,sunshine:chararray);
+
+Dump Reading;
+
+Data = FILTER Reading BY maxtemp IS NOT NULL AND mintemp IS NOT NULL AND year != 'yyyy';
+
+Dump Data;
+
+Datavals = FOREACH Data GENERATE year,month,maxtemp,mintemp,frostday,rainfall,REPLACE(sunshine,'---','') AS sunshine;
+
+Datavals1 = FOREACH Datavals GENERATE year,month,maxtemp,mintemp,frostday,rainfall,REPLACE(sunshine,'#','') AS sunshine;
+
+Datavals2 = FOREACH Datavals1 GENERATE year,month,maxtemp,mintemp,frostday,rainfall,REPLACE(sunshine,'Provisional','') AS sunshine;
+
+Datavals3 = FOREACH Datavals2 GENERATE year,month,maxtemp,mintemp,frostday,rainfall,REPLACE(sunshine,' ','') AS sunshine;
+
+sortreadings = ORDER Datavals3 BY year ASC , month ASC;
+
+STORE sortreadings INTO '/unit/cleanheathrow' USING PigStorage(' ');
+
+3. Pig python File(heathrow_udf.py)
+
+@outputSchema("a_temp:{(year:float,month:float,maxtemp:float,mintemp:float,frostday:chararray,rainfall:chararray,sunshine:chararray)}")
+def degree_far(temp_data):
+	year,month,maxtemp,mintemp,frostday,rainfall,sunshine=temp_data.split(' ')
+	maxtemp=float(maxtemp) *0.56+32	
+	mintemp=float(mintemp) *0.56+32
+	return year,month,float(maxtemp),float(mintemp),frostday,rainfall,sunshine
+
+hadoop fs -put /home/cloudera/Desktop/healthrow_udf.py /unit/
+
+4. Register Python with Pig
+
+REGISTER 'hdfs:///unit/healthrow_udf.py' USING jython as convert_degree;
+
+rowdata = LOAD '/unit/cleanheathrow' AS (a_temp:chararray);
+
+convfar = FOREACH rowdata GENERATE FLATTEN(convert_degree.degree_far(a_temp));
+
+STORE convfar INTO '/unit/convfar' USING PigStorage(' ');
+
+
+5. Create Hive Table(degreee)
+
+Drop table if exists degreee;
+create external table degreee(
+year float,
+month float,
+maxtemp float,
+mintemp float,
+frostday float,
+rainfall float,
+sunshine float)
+row format delimited fields terminated by ' '
+Stored as textfile location '/unit/cleanheathrow';
+
+6. HIve python file
+
+#!/usr/bin/env python
+
+import sys
+import string
+
+while True:
+	line=sys.stdin.readline()
+	if not line:
+		break
+	row=string.strip(line, "\n")
+	year,month,maxtemp,mintemp,frostday,rainfall,sunshine= string.split(row, "\t")
+	rainfall= float(rainfall)/25.4
+	print "\t".join([year,month,maxtemp,mintemp,frostday,str(rainfall),sunshine])
+
+hadoop fs -put /home/cloudera/Desktop/hive.py /unit/
+
+
+7.
+
+add file hdfs:///unit/hive.py;
+
+SELECT TRANSFORM(year,month,maxtemp,mintemp,frostday,rainfall,sunshine) USING 'python hive.py' AS (year float,month float,maxtemp float,frostdat float,rainfall float,sunshine float) FROM degreee;
+
+############################################################### Freight Miles ##################################
+
+hadoop fs -mkdir /fry
+
+hadoop fs -put /home/cloudera/Desktop/traffic.csv /fry
+
+hadoop fs -ls /fry
+
+1. inside pig
+
+Reading = LOAD '/fry/traffic.csv' USING PigStorage(',') AS (year:float,cp:chararray,ajunction:chararray,bjunction:chararray,lennet:float,cycles:float,bikes:float,cars:float,buses:float,vans:float,trucks:float);
+
+Dump Reading;
+
+#remove header
+Data = FILTER Source BY year IS NOT NULL;
+
+#GroupBY
+YearGroups = GROUP Data BY year;
+
+yearlytotals = FOREACH yeargroups GENERATE group as year,SUM(Data.lennet) AS totaldistance, SUM(Data.vans) AS totalvans , SUM(Data.trucks) AS totaltrucks;
+
+dump yearlytotals;
+
+sorttotals = ORDER yearlytotals BY year;
+
+dump sorttotals;
+
+STORE sorttotals INTO '/fry/cleantraffic' USING PigStorage(' ');
+
+2. Pig Python file
+
+@outputSchema("a_km:{(year:float,totaldistance:float,totaltrucks:float,totalvans:float)}")
+def km_to_mile(data):
+	year,totaldistance,totaltrucks,totalvans=data.split(' ')
+	totaldistance=float(totaldistance)*0.68
+	return year,float(totaldistance),totaltrucks,totalvans
+
+#Register with PIG
+
+REGISTER 'hdfs:///fry/fry_pig.py' USING jython AS covert_km;
+
+rowdata = LOAD '/fry/cleantraffic' AS (data:chararray);
+
+convkm = FOREACH rowdata GENERATE FLATTEN(covert_km.km_to_mile(data));
+
+STORE convkm INTO '/fry/convkm' USING PigStorage(' ');
+
+
+3. Hive 
+
+Create table;
+
+create external table km(year float,totaldistance float,trucks float,vans float) ROW FORMAT DELIMITED FIELDS TERMINATED BY ' ' STORED AS TEXTFILE LOCATION '/fry/cleantraffic';
+
+select * from km;
+
+#HiVE Python file
+
+import sys
+import string
+
+while True:
+	line=sys.stdin.readline()
+	if not line:
+		break;
+	row=string.strip(line,"\n")
+	year,totaldistance,trucks,vans=string.split(row,"\t")
+	total_freight = float(trucks)+float(vans)
+	print "\t".join([year,str(total_freight),trucks,vans])
+
+#register with hive
+
+add file hdfs:///fry/fry_hive.py;
+
+SELECT TRANSFORM(year,totaldistance,trucks,vans) USING 'python fry_hive.py' AS (year float,total_freight float,trucks float,vans float) FROM km;
+
+
+
+
+
+
+
+
+
+
+
+
+
